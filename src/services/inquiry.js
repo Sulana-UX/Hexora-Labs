@@ -4,14 +4,16 @@ import { site } from '../config/site'
  * Inquiry service — the single boundary between the UI and however inquiries
  * are delivered.
  *
- * Today: builds a mailto: link that opens the visitor's own email app with the
- * details pre-filled. Nothing is sent or stored by this website.
+ * Providers (set with VITE_INQUIRY_PROVIDER, default 'api'):
+ *  - 'api'    : POSTs to /api/inquiry (Cloudflare Pages Function in
+ *               functions/api/inquiry.js), which emails the inquiry with a PDF
+ *               summary attached to hexoralabs@gmail.com via Gmail SMTP.
+ *  - 'mailto' : opens the visitor's own email app with the details pre-filled.
+ *  - 'supabase' (future): see src/lib/supabase.js.
  *
- * Future (Supabase): implement `submitViaSupabase` (see src/lib/supabase.js)
- * and switch INQUIRY_PROVIDER. The form component only calls `submitInquiry`
- * and reads its result, so no UI changes are required.
+ * The form component only calls `submitInquiry` and reads its result.
  */
-export const INQUIRY_PROVIDER = 'mailto' // 'mailto' | 'supabase'
+export const INQUIRY_PROVIDER = import.meta.env.VITE_INQUIRY_PROVIDER || 'api'
 
 export const emptyInquiry = {
   name: '',
@@ -72,13 +74,42 @@ export function buildMailtoUrl(values) {
   return `mailto:${site.email}?subject=${subject}&body=${body}`
 }
 
+async function submitViaApi(values, { honeypot, elapsedMs }) {
+  const res = await fetch('/api/inquiry', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      name: values.name.trim(),
+      email: values.email.trim(),
+      projectType: values.projectType,
+      budget: values.budget,
+      deadline: values.deadline,
+      description: values.description.trim(),
+      botcheck: honeypot ? true : undefined,
+      elapsedMs,
+    }),
+  })
+  let data = {}
+  try {
+    data = await res.json()
+  } catch {
+    /* non-JSON response (e.g. function not available) */
+  }
+  if (!res.ok || !data.success) throw new Error(data.message || `Request failed (${res.status})`)
+  return data
+}
+
 /**
  * Submit an inquiry. Returns `{ status, ... }`:
- *  - `{ status: 'handoff', mailto }` → the email app was asked to open; the
- *     visitor still has to press Send. Never treat this as "delivered".
- *  - `{ status: 'sent' }` → (future) stored server-side.
+ *  - `{ status: 'sent', reference? }` → delivered by the website (api / supabase)
+ *  - `{ status: 'handoff', mailto }`  → email app asked to open; visitor must still press Send
+ * Throws on network / service errors so the UI can offer alternatives.
  */
-export async function submitInquiry(values) {
+export async function submitInquiry(values, { honeypot = '', elapsedMs } = {}) {
+  if (INQUIRY_PROVIDER === 'api') {
+    const data = await submitViaApi(values, { honeypot, elapsedMs })
+    return { status: 'sent', reference: data.reference }
+  }
   if (INQUIRY_PROVIDER === 'supabase') {
     const { submitViaSupabase } = await import('../lib/supabase')
     await submitViaSupabase(values)

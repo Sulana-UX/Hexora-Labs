@@ -9,10 +9,17 @@ export function useActiveSection(ids) {
     const list = key.split('|')
     const onScroll = () => {
       const marker = window.innerHeight * 0.35
+      // Pick the section whose top is closest above the marker (DOM order may differ from nav order)
       let current = list[0]
+      let best = -Infinity
       for (const id of list) {
         const el = document.getElementById(id)
-        if (el && el.getBoundingClientRect().top <= marker) current = id
+        if (!el) continue
+        const top = el.getBoundingClientRect().top
+        if (top <= marker && top > best) {
+          best = top
+          current = id
+        }
       }
       // At the very bottom, highlight the last section
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {

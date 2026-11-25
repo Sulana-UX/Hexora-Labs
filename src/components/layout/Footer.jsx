@@ -7,6 +7,7 @@ import { useInquiry } from '../../context/InquiryContext'
 import { Container } from '../ui/Container'
 import { Logo } from '../ui/Logo'
 import { WhatsAppIcon } from '../ui/WhatsAppIcon'
+import { INQUIRY_PROVIDER } from '../../services/inquiry'
 
 const linkCls = 'text-[0.95rem] text-navy/80 transition-colors hover:text-primary'
 const headCls = 'font-sans text-xs font-semibold uppercase tracking-[0.16em] text-navy/55'
@@ -120,8 +121,9 @@ export function Footer() {
             <div className="mt-8 rounded-2xl bg-ice/70 p-5">
               <h3 className="font-sans text-sm font-semibold text-navy">Your privacy</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                This website does not collect or store inquiry details. The contact form only prepares an email in your
-                own email app — we receive your information only if you choose to send it, and use it solely to respond.
+                {INQUIRY_PROVIDER !== 'mailto'
+                  ? 'Inquiry details are delivered straight to our email inbox and used only to respond to you. This website does not keep a copy.'
+                  : 'This website does not collect or store inquiry details. The contact form only prepares an email in your own email app — we receive your information only if you choose to send it, and use it solely to respond.'}
               </p>
               <Link to="/privacy" className="mt-3 inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline">
                 Read the privacy notice

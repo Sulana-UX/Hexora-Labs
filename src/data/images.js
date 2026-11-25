@@ -11,6 +11,8 @@ import code600 from '../assets/images/code-closeup-600.webp'
 import code360 from '../assets/images/code-closeup-360.webp'
 import wireframe1200 from '../assets/images/wireframe-sketch-1200.webp'
 import wireframe720 from '../assets/images/wireframe-sketch-720.webp'
+import analytics640 from '../assets/images/analytics-dashboard-640.webp'
+import analytics400 from '../assets/images/analytics-dashboard-400.webp'
 
 export const photos = {
   students: {
@@ -44,5 +46,13 @@ export const photos = {
     height: 800,
     alt: 'A hand sketching app wireframes on paper during the design stage',
     source: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e',
+  },
+  analytics: {
+    src: analytics640,
+    srcSet: `${analytics400} 400w, ${analytics640} 640w`,
+    width: 640,
+    height: 480,
+    alt: 'A laptop showing an analytics dashboard with charts',
+    source: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71',
   },
 }

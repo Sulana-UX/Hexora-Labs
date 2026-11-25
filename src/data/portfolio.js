@@ -1,81 +1,69 @@
-/**
- * Portfolio entries.
- *
- * IMPORTANT: everything below is a CONCEPT / DEMONSTRATION project created to
- * illustrate Hexora Labs' approach — not completed client work. Keep `concept: true`
- * until replaced with real, verifiable projects. To add a real project, add an
- * entry with `concept: false`, and either a `preview` key (see
- * src/components/illustrations/ProjectPreviews.jsx) or an `image` imported from
- * src/assets/portfolio/.
- */
-export const portfolioCategories = [
-  { id: 'all', label: 'All' },
-  { id: 'website', label: 'Websites' },
-  { id: 'webapp', label: 'Web Applications' },
-  { id: 'mobile', label: 'Mobile Applications' },
-  { id: 'desktop', label: 'Desktop Software' },
-  { id: 'ai', label: 'AI & Data Solutions' },
-]
+import cineverseHome1200 from '../assets/portfolio/cineverse-home-1200.webp'
+import cineverseHome720 from '../assets/portfolio/cineverse-home-720.webp'
+import cineverseShowing1200 from '../assets/portfolio/cineverse-showing-1200.webp'
+import cineverseShowing720 from '../assets/portfolio/cineverse-showing-720.webp'
+import cineverseSeats from '../assets/portfolio/cineverse-seats-640.webp'
+import monsoonDay1200 from '../assets/portfolio/monsoon-day-1200.webp'
+import monsoonDay720 from '../assets/portfolio/monsoon-day-720.webp'
+import monsoonEvening1200 from '../assets/portfolio/monsoon-evening-1200.webp'
+import monsoonEvening720 from '../assets/portfolio/monsoon-evening-720.webp'
+import monsoonDashboard from '../assets/portfolio/monsoon-dashboard-640.webp'
 
-export const projects = [
+const shot = (src1200, src720, alt) => ({ src: src1200, srcSet: `${src720} 720w, ${src1200} 1200w`, width: 1200, height: 750, alt })
+
+/**
+ * Portfolio — complete, working full-stack projects developed by the Hexora
+ * Labs team. Screenshots come from each project's repository and use demo data.
+ *
+ * To add a project: put optimised .webp screenshots in src/assets/portfolio/,
+ * import them above and add an entry below (views = toggleable main
+ * screenshots, inset = the small floating screen).
+ */
+export const featuredProjects = [
   {
-    id: 'campus-connect',
-    title: 'Campus Connect',
-    category: 'webapp',
-    concept: true,
+    id: 'cineverse',
+    title: 'CINEVERSE',
+    tagline: 'Beyond the Screen',
+    category: 'Web Application',
     description:
-      'A portal concept for university clubs to publish events, manage registrations and share announcements in one place.',
-    tags: ['React', 'Node.js', 'PostgreSQL'],
-    preview: 'campus',
+      'A luxury cinema website with live seat booking, online payments and an admin dashboard — designed to feel as immersive as the big screen.',
+    highlights: [
+      'Live seat map with three price tiers and real-time updates',
+      'Four-step booking with secure online payment',
+      'QR-code e-tickets delivered by email',
+      'Admin dashboard: revenue, occupancy, check-in and refunds',
+    ],
+    tags: ['React 19', 'Express', 'Supabase', 'PayHere'],
+    github: 'https://github.com/Sulana-UX/CINEVERSE',
+    theme: 'dark',
+    views: [
+      { label: 'Home', image: shot(cineverseHome1200, cineverseHome720, 'CINEVERSE home page with a cinema auditorium and the CINEVERSE title on screen') },
+      { label: 'Now Showing', image: shot(cineverseShowing1200, cineverseShowing720, 'CINEVERSE Now Showing page listing films with showtimes') },
+    ],
+    inset: { src: cineverseSeats, width: 640, height: 400, alt: 'CINEVERSE seat selection step with a live seat map' },
+    insetLabel: 'Seat selection',
   },
   {
-    id: 'brew-bloom',
-    title: 'Brew & Bloom',
-    category: 'website',
-    concept: true,
+    id: 'monsoon-ridge',
+    title: 'Monsoon Ridge',
+    tagline: 'Jungle Resort & Spa',
+    category: 'Web Application',
     description:
-      'A marketing website concept for a neighbourhood café — seasonal menu, opening hours and table-reservation requests.',
-    tags: ['React', 'Tailwind CSS', 'SEO'],
-    preview: 'cafe',
-  },
-  {
-    id: 'pocket-ledger',
-    title: 'PocketLedger',
-    category: 'mobile',
-    concept: true,
-    description:
-      'A personal finance app concept with budgets, spending categories and clear monthly insights.',
-    tags: ['Flutter', 'SQLite'],
-    preview: 'finance',
-  },
-  {
-    id: 'stockroom',
-    title: 'StockRoom',
-    category: 'desktop',
-    concept: true,
-    description:
-      'An offline-first inventory and billing tool concept for small retail shops, with low-stock alerts and receipts.',
-    tags: ['Electron', 'React', 'SQLite'],
-    preview: 'inventory',
-  },
-  {
-    id: 'insight-lens',
-    title: 'InsightLens',
-    category: 'ai',
-    concept: true,
-    description:
-      'A sales-forecasting dashboard concept that pairs historical data with a machine-learning model and readable charts.',
-    tags: ['Python', 'scikit-learn', 'FastAPI'],
-    preview: 'forecast',
-  },
-  {
-    id: 'mediqueue',
-    title: 'MediQueue',
-    category: 'webapp',
-    concept: true,
-    description:
-      'An appointment-booking concept for small clinics — live queue status, reminders and a simple staff dashboard.',
-    tags: ['React', 'REST API', 'MongoDB'],
-    preview: 'clinic',
+      'A complete hotel website and staff dashboard for a jungle resort concept in Sri Lanka — from online booking to front desk, housekeeping, billing and reports.',
+    highlights: [
+      'Online booking with live pricing, seasons and promo codes',
+      'Front desk, housekeeping board and guest billing',
+      'Invoices, confirmation emails and verified guest reviews',
+      'Revenue reports, staff roles and an activity log',
+    ],
+    tags: ['React', 'Express', 'Firebase', 'Cloudinary'],
+    github: 'https://github.com/Sulana-UX/monsoon-ridge',
+    theme: 'light',
+    views: [
+      { label: 'Day', image: shot(monsoonDay1200, monsoonDay720, 'Monsoon Ridge home page in day view with a pool and mountains') },
+      { label: 'Evening', image: shot(monsoonEvening1200, monsoonEvening720, 'Monsoon Ridge home page in evening view with cabana lights on') },
+    ],
+    inset: { src: monsoonDashboard, width: 640, height: 400, alt: 'Monsoon Ridge staff dashboard overview with revenue and occupancy' },
+    insetLabel: 'Staff dashboard',
   },
 ]

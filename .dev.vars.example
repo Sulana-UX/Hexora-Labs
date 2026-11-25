@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local testing (git-ignored). In production, add these
+# as encrypted variables in Cloudflare Pages -> Settings -> Variables and Secrets.
+GMAIL_USER=hexoralabs@gmail.com
+GMAIL_APP_PASSWORD=your-16-character-app-password
+INQUIRY_TO=hexoralabs@gmail.com

@@ -1,12 +1,14 @@
 import { useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Check, ChevronDown, Copy, Mail, MailOpen, Phone, Send } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, Copy, Loader2, Mail, MailOpen, Phone, Send } from 'lucide-react'
 import { site } from '../../config/site'
 import { budgetRanges, projectTypes } from '../../data/content'
 import {
   buildInquiryBody,
   buildInquirySubject,
+  buildMailtoUrl,
   emptyInquiry,
+  INQUIRY_PROVIDER,
   submitInquiry,
   validateInquiry,
 } from '../../services/inquiry'
@@ -136,17 +138,29 @@ function DirectEmail() {
   )
 }
 
-const steps = [
-  'Fill in your project details below.',
-  'Your email app opens with the message ready.',
-  'Review it and press Send — that’s when we receive it.',
-]
+const direct = INQUIRY_PROVIDER !== 'mailto'
+
+const steps = direct
+  ? [
+      'Fill in your project details below.',
+      'Press Send Inquiry — it goes straight to our inbox.',
+      'We review your idea and reply to you by email.',
+    ]
+  : [
+      'Fill in your project details below.',
+      'Your email app opens with the message ready.',
+      'Review it and press Send — that’s when we receive it.',
+    ]
 
 export function Contact() {
   const { preset } = useInquiry()
   const [values, setValues] = useState(emptyInquiry)
   const [errors, setErrors] = useState({})
   const [handoff, setHandoff] = useState(null) // { mailto } after opening the email app
+  const [status, setStatus] = useState('idle') // idle | sending | sent | error
+  const [sentTo, setSentTo] = useState(null) // { name, email } after a successful send
+  const [honeypot, setHoneypot] = useState(false)
+  const [mountedAt] = useState(() => Date.now())
   const [seenNonce, setSeenNonce] = useState(0)
   const formRef = useRef(null)
   const statusRef = useRef(null)
@@ -166,10 +180,12 @@ export function Contact() {
     setValues((v) => ({ ...v, [field]: value }))
     if (errors[field]) setErrors((er) => ({ ...er, [field]: undefined }))
     if (handoff) setHandoff(null)
+    if (status === 'error') setStatus('idle')
   }
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    if (status === 'sending') return
     const found = validateInquiry(values)
     setErrors(found)
     const first = Object.keys(found)[0]
@@ -177,11 +193,27 @@ export function Contact() {
       formRef.current?.querySelector(`[name="${first}"]`)?.focus()
       return
     }
-    const result = await submitInquiry(values)
-    if (result.status === 'handoff') {
-      setHandoff({ mailto: result.mailto })
-      requestAnimationFrame(() => statusRef.current?.focus())
+    setStatus('sending')
+    try {
+      const result = await submitInquiry(values, { honeypot: honeypot ? 'on' : '', elapsedMs: Date.now() - mountedAt })
+      if (result.status === 'handoff') {
+        setStatus('idle')
+        setHandoff({ mailto: result.mailto })
+      } else {
+        setSentTo({ name: values.name.trim().split(' ')[0], email: values.email.trim(), reference: result.reference })
+        setValues(emptyInquiry)
+        setStatus('sent')
+      }
+    } catch {
+      setStatus('error')
     }
+    requestAnimationFrame(() => statusRef.current?.focus())
+  }
+
+  const resetForm = () => {
+    setStatus('idle')
+    setSentTo(null)
+    requestAnimationFrame(() => formRef.current?.querySelector('[name="name"]')?.focus())
   }
 
   const fullText = `To: ${site.email}\nSubject: ${buildInquirySubject(values)}\n\n${buildInquiryBody(values).replace(/\r\n/g, '\n')}`
@@ -325,18 +357,124 @@ export function Contact() {
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-xs text-xs leading-relaxed text-muted">
-                This opens your email app with your details filled in. Nothing is sent or stored by this website.
+                {direct
+                  ? 'Your inquiry is delivered straight to our inbox, and we reply by email. We use your details only to respond.'
+                  : 'This opens your email app with your details filled in. Nothing is sent or stored by this website.'}
               </p>
               <button
                 type="submit"
-                className="group inline-flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-primary pl-7 pr-2 font-semibold text-white shadow-[0_10px_24px_-12px_rgb(0_102_230/0.7)] transition-colors duration-300 hover:bg-primary-600"
+                disabled={status === 'sending'}
+                aria-busy={status === 'sending'}
+                className="group inline-flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-primary pl-7 pr-2 font-semibold text-white shadow-[0_10px_24px_-12px_rgb(0_102_230/0.7)] transition-colors duration-300 hover:bg-primary-600 disabled:cursor-wait disabled:opacity-80"
               >
-                Open in Email App
+                {direct ? (status === 'sending' ? 'Sending…' : 'Send Inquiry') : 'Open in Email App'}
                 <span className="grid size-10 place-items-center rounded-full bg-white/15 transition-colors group-hover:bg-white group-hover:text-primary">
-                  <MailOpen aria-hidden="true" className="size-4" />
+                  {status === 'sending' ? (
+                    <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                  ) : direct ? (
+                    <Send aria-hidden="true" className="size-4" />
+                  ) : (
+                    <MailOpen aria-hidden="true" className="size-4" />
+                  )}
                 </span>
               </button>
             </div>
+
+            {/* spam trap: hidden from people, often filled by bots */}
+            <input
+              type="checkbox"
+              name="botcheck"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="hidden"
+              checked={honeypot}
+              onChange={(e) => setHoneypot(e.target.checked)}
+            />
+
+            <AnimatePresence>
+              {status === 'sent' && sentTo && (
+                <motion.div
+                  key="sent"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div ref={statusRef} tabIndex={-1} role="status" className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-50 p-5">
+                    <p className="flex items-center gap-2 font-semibold text-navy">
+                      <span className="grid size-6 place-items-center rounded-full bg-emerald-500 text-white">
+                        <Check aria-hidden="true" className="size-3.5" strokeWidth={3} />
+                      </span>
+                      Thank you{sentTo.name ? `, ${sentTo.name}` : ''}! Your inquiry has been sent.
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted">
+                      We&apos;ll review your project and reply to <strong className="font-semibold text-navy">{sentTo.email}</strong>.
+                      Please check your spam folder if you don&apos;t see our reply.
+                    </p>
+                    {sentTo.reference && (
+                      <p className="mt-2 text-xs text-muted">
+                        Reference: <span className="font-mono font-semibold text-navy">{sentTo.reference}</span>
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="mt-4 inline-flex h-10 items-center gap-2 rounded-full border border-line bg-white px-4 text-sm font-semibold text-navy hover:border-navy/25"
+                    >
+                      Send another inquiry
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+              {status === 'error' && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div ref={statusRef} tabIndex={-1} role="alert" className="mt-6 rounded-2xl border border-red-300 bg-red-50 p-5">
+                    <p className="flex items-center gap-2 font-semibold text-navy">
+                      <AlertCircle aria-hidden="true" className="size-4 text-red-600" />
+                      Sorry — your inquiry couldn&apos;t be sent.
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted">
+                      Please check your internet connection and try again, or contact us directly. Your details are still in
+                      the form.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2.5">
+                      <button
+                        type="submit"
+                        className="inline-flex h-10 items-center gap-2 rounded-full bg-navy px-4 text-sm font-semibold text-white hover:bg-primary"
+                      >
+                        Try again
+                      </button>
+                      <a
+                        href={buildMailtoUrl(values)}
+                        className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-white px-4 text-sm font-semibold text-navy hover:border-navy/25"
+                      >
+                        <Mail aria-hidden="true" className="size-4" /> Email us instead
+                      </a>
+                      {site.whatsapp && (
+                        <a
+                          href={site.whatsapp.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-10 items-center gap-2 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-4 text-sm font-semibold text-[#0b6b34]"
+                        >
+                          <WhatsAppIcon className="size-4" /> WhatsApp
+                          <span className="sr-only">(opens in a new tab)</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <AnimatePresence>
               {handoff && (

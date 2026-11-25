@@ -2,18 +2,25 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { site } from '../config/site'
+import { INQUIRY_PROVIDER } from '../services/inquiry'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { Container, Panel } from '../components/ui/Container'
 import { Eyebrow } from '../components/ui/SectionHeading'
 
+const direct = INQUIRY_PROVIDER !== 'mailto'
+
 const sections = [
   {
     title: 'What this website collects',
-    body: 'This website does not use a database, analytics trackers or advertising cookies, and it does not store the details you type into the project inquiry form.',
+    body: direct
+      ? 'This website does not use a database, analytics trackers or advertising cookies. Details you submit through the project inquiry form are delivered to our email inbox; the website itself does not keep a copy.'
+      : 'This website does not use a database, analytics trackers or advertising cookies, and it does not store the details you type into the project inquiry form.',
   },
   {
     title: 'How the inquiry form works',
-    body: `When you choose “Open in Email App”, your browser opens your own email application with a message to ${site.email} containing the details you entered. Nothing is sent until you review that email and press Send yourself.`,
+    body: direct
+      ? `When you press “Send Inquiry”, the details you entered are sent securely (HTTPS) to ${site.email}. Our secure server function prepares a PDF summary of your inquiry and emails it to us; it is not saved in any database.`
+      : `When you choose “Open in Email App”, your browser opens your own email application with a message to ${site.email} containing the details you entered. Nothing is sent until you review that email and press Send yourself.`,
   },
   {
     title: 'How we use your information',

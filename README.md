@@ -69,7 +69,9 @@ No production domain is hard-coded. Once you have one:
 ```
 brand-originals/            Original logo files (never modified)
 scripts/process_assets.py   Generates optimised web assets from the originals
-public/                     Favicons, OG image, manifest, _redirects, _headers, robots.txt
+public/                     Favicons, OG image, manifest, _redirects, _headers, robots.txt, brand/ logo for PDFs
+functions/api/inquiry.js    Cloudflare Pages Function: validates, builds PDF, emails via Gmail
+server/inquiry-pdf.js       PDF generator shared by the function
 src/
   config/site.js            Brand name, email, optional phone/WhatsApp/socials, navigation
   data/content.js           Services, Student Hub items, process steps, reasons, form options
@@ -81,7 +83,7 @@ src/
   components/
     layout/                 Navbar, Footer, Layout
     sections/               Hero, Services, StudentHub, Portfolio, Process, About, Contact
-    illustrations/          Hero illustration and portfolio UI previews (code-drawn SVG/CSS)
+    illustrations/          Hero architecture-diagram illustration (code-drawn SVG/CSS)
     ui/                     Button, Container/Panel, SectionHeading, Reveal, Logo
   pages/                    Home (one-page), Privacy, NotFound
 ```
@@ -92,19 +94,39 @@ src/
 
 - **Email, phone, WhatsApp, social links:** `src/config/site.js`. `phone` is `{ display, href }` (e.g. `tel:+94…`); `phone`/`whatsapp` render only when set, and social links render only when they have a real `url`.
 - **Services, Student Hub, process, reasons, budget tiers, project types:** `src/data/content.js`.
-- **Portfolio:** `src/data/portfolio.js`. All current entries are clearly marked **concept projects** (`concept: true`), which shows a "Concept project" badge. When real projects are completed, add them with `concept: false` and either a code-drawn preview or an image (see "Asset management").
+- **Portfolio:** `src/data/portfolio.js`. Each project has toggleable screenshots (`views`), a small floating screenshot (`inset`), highlights, tech tags and a GitHub link. Screenshots go in `src/assets/portfolio/` as optimised `.webp` files.
 
 ---
 
-## 6. Contact form behaviour
+## 6. Contact form: email with PDF
 
-The inquiry form validates input, then builds an RFC 6068-encoded `mailto:` link to **hexoralabs@gmail.com**, with subject and body pre-filled. That link opens the visitor's own email app.
+When a visitor presses **Send Inquiry**, the form posts to **`/api/inquiry`**, a free Cloudflare Pages Function in `functions/api/inquiry.js`. The function:
 
-- The website **does not send or store** anything, and the UI says the visitor must press **Send** in their email app. No false "success" message is shown.
-- If no email app opens, visitors can re-open the link or copy the full inquiry text.
-- A direct email button and a copy-email button are always available.
+1. validates the data again on the server and filters spam (hidden honeypot field, minimum fill time, same-origin check)
+2. creates a branded **PDF summary** with a reference number such as `HX-261125-4K7Q` (`server/inquiry-pdf.js`, using pdf-lib)
+3. emails it through **Gmail SMTP** (worker-mailer) from and to `hexoralabs@gmail.com`, with the PDF attached and *Reply-To* set to the visitor.
 
----
+The visitor sees a confirmation with the reference number only after the email has been sent. If sending fails, they get *Try again*, *Email us instead* and *WhatsApp* options.
+
+### Secrets (never commit these)
+
+| Variable | Value |
+| --- | --- |
+| `GMAIL_USER` | `hexoralabs@gmail.com` |
+| `GMAIL_APP_PASSWORD` | The 16-character Google App password (Google Account → Security → 2-Step Verification → App passwords) |
+| `INQUIRY_TO` | Where inquiries are delivered (default: `GMAIL_USER`) |
+
+- **Local:** copy `.dev.vars.example` to `.dev.vars` and fill it in. It is git-ignored.
+- **Cloudflare Pages:** go to **Settings → Variables and Secrets** and add all three for *Production* (and *Preview* if you want), with `GMAIL_APP_PASSWORD` set to **Encrypt**. Then redeploy.
+
+### Local testing of the form
+
+```bash
+npm run dev:api      # builds the site and runs it with Functions at http://127.0.0.1:8788
+```
+You can also keep `npm run dev` running at the same time: Vite forwards `/api` calls to port 8788.
+
+The PDF uses standard fonts, so Sinhala or Tamil characters appear as "?" in the PDF (with a note). The email body always shows the original text. Gmail allows about 500 emails a day, far more than a contact form needs.
 
 ## 7. Asset management
 
