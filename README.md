@@ -79,11 +79,17 @@ In the **backend** project, go to **Settings → Environment Variables** and set
 
 **Custom domain.** In the website project, go to **Settings → Domains**, then add that domain to `ALLOWED_ORIGINS` in the backend project and redeploy it.
 
-### SEO after choosing a domain
+### SEO
 
-1. In `frontend/index.html`, change `og:image` and `twitter:image` to absolute URLs, and add `og:url` and `<link rel="canonical">`.
-2. Optionally add `frontend/public/sitemap.xml` and reference it in `robots.txt`.
-3. Set `VITE_SITE_URL` in the website project's environment variables. It is exposed as `site.url` in `frontend/src/config/site.js`.
+The public site URL defaults to `https://hexora-labs.vercel.app` (set in `frontend/vite.config.js`). Everything below is derived from it:
+
+- canonical link, `og:url`, absolute `og:image` / `twitter:image` and Organization + WebSite JSON-LD in `frontend/index.html`
+- `sitemap.xml` and `robots.txt`, generated at build time
+- per-section titles and descriptions (`sectionMeta` in `frontend/src/config/site.js`). Section URLs canonicalise to `/`; the 404 page is `noindex`.
+
+**After adding a custom domain,** set `VITE_SITE_URL=https://your-domain` in the website project's environment variables (or change the default in `vite.config.js`) and redeploy.
+
+**Get indexed:** add the site in [Google Search Console](https://search.google.com/search-console) (URL-prefix property, verify with the *HTML tag* method by pasting the meta tag into `frontend/index.html`), then submit `sitemap.xml` under **Sitemaps**. Do the same in [Bing Webmaster Tools](https://www.bing.com/webmasters) (it can import from Search Console).
 
 ---
 

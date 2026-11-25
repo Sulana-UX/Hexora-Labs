@@ -27,7 +27,9 @@ export default function Home() {
   const section = sectionByPath[cleanPath]
   const first = useRef(true)
 
-  useDocumentTitle(sectionMeta[section ?? 'home']?.title)
+  // Unknown paths render <NotFound />, which sets its own (noindex) metadata.
+  const meta = section ? sectionMeta[section] : undefined
+  useDocumentTitle(meta?.title, meta?.description, { path: '/' })
 
   useEffect(() => {
     if (!section) return

@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button'
 import markUrl from '../assets/brand/logo-mark.webp'
 
 export default function NotFound() {
-  useDocumentTitle('Page not found | Hexora Labs')
+  useDocumentTitle('Page not found | Hexora Labs', undefined, { noindex: true })
   return (
     <Panel aria-labelledby="nf-title" className="mt-3 bg-ice sm:mt-4">
       <Container className="flex flex-col items-center pb-24 pt-36 text-center sm:pb-32 sm:pt-44">

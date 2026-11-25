@@ -10,8 +10,8 @@ export const site = {
     'Hexora Labs designs and develops modern websites, applications and data solutions for university students, startups, individuals and small businesses.',
   email: 'hexoralabs@gmail.com',
 
-  /** Optional public URL once a domain is chosen (set VITE_SITE_URL). */
-  url: import.meta.env.VITE_SITE_URL || '',
+  /** Public site URL (VITE_SITE_URL; default set in vite.config.js). Used for canonical/OG URLs. */
+  url: (import.meta.env.VITE_SITE_URL || '').replace(/\/+$/, ''),
 
   /**
    * Optional contact channels. Leave as null until real details exist —
@@ -44,13 +44,41 @@ export const navigation = [
   { label: 'Contact', path: '/contact', section: 'contact' },
 ]
 
-/** Section metadata used for per-URL document titles. */
+/**
+ * Section metadata used for per-URL titles and descriptions.
+ * Section URLs (/services, /work, ...) show the one-page home, so their canonical URL is '/'.
+ */
 export const sectionMeta = {
-  home: { title: 'Hexora Labs – Software Solutions | Web, Mobile & AI Development' },
-  services: { title: 'Services | Hexora Labs – Software Solutions' },
-  work: { title: 'Our Work | Hexora Labs – Software Solutions' },
-  'student-hub': { title: 'Student Hub – University Project Guidance | Hexora Labs' },
-  process: { title: 'How We Work | Hexora Labs – Software Solutions' },
-  about: { title: 'About | Hexora Labs – Software Solutions' },
-  contact: { title: 'Contact | Hexora Labs – Software Solutions' },
+  home: {
+    title: 'Hexora Labs – Software Solutions | Web, Mobile & AI Development',
+    description:
+      'Hexora Labs designs and develops websites, web and mobile apps, desktop software, APIs, databases and AI/data solutions for students, startups and small businesses — with affordable university project mentoring.',
+  },
+  services: {
+    title: 'Services | Hexora Labs – Software Solutions',
+    description:
+      'Website development, web applications, mobile apps, desktop software, APIs and backends, databases, AI/ML and data analytics, and testing — built with modern technologies.',
+  },
+  work: {
+    title: 'Our Work | Hexora Labs – Software Solutions',
+    description: 'Projects built by Hexora Labs, with screenshots, highlights and the technologies used.',
+  },
+  'student-hub': {
+    title: 'Student Hub – University Project Guidance | Hexora Labs',
+    description:
+      'Affordable university project mentoring: planning, coding and debugging help, prototypes, testing, documentation and presentation preparation.',
+  },
+  process: {
+    title: 'How We Work | Hexora Labs – Software Solutions',
+    description: 'Our four-step process — Discover, Design, Develop, Deliver — keeps every project clear from idea to launch.',
+  },
+  about: {
+    title: 'About | Hexora Labs – Software Solutions',
+    description:
+      'Why choose Hexora Labs: transparent pricing, personalised solutions, modern technologies, clear communication and ongoing support.',
+  },
+  contact: {
+    title: 'Contact | Hexora Labs – Software Solutions',
+    description: 'Tell us about your project. Send an inquiry, email hexoralabs@gmail.com or message us on WhatsApp.',
+  },
 }

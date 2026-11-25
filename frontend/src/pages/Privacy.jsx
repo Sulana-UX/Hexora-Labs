@@ -37,7 +37,7 @@ const sections = [
 ]
 
 export default function Privacy() {
-  useDocumentTitle('Privacy Notice | Hexora Labs – Software Solutions', 'How Hexora Labs handles information shared through project inquiries.')
+  useDocumentTitle('Privacy Notice | Hexora Labs – Software Solutions', 'How Hexora Labs handles information shared through project inquiries.', { path: '/privacy' })
   useEffect(() => window.scrollTo(0, 0), [])
 
   return (
