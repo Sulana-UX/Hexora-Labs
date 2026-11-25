@@ -1,0 +1,117 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-navy: #0b2343;
+  --color-navy-800: #12305a;
+  --color-navy-700: #1b3d6c;
+  --color-primary: #0066e6;
+  --color-primary-600: #0057c4;
+  --color-cyan: #00b9f1;
+  --color-ice: #eaf3fc;
+  --color-ice-200: #d6e7f8;
+  --color-ink: #111827;
+  --color-muted: #4b5a6e;
+  --color-line: #dbe6f2;
+
+  --font-display: 'Sora Variable', 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-panel: 2.5rem;
+
+  --shadow-soft: 0 1px 2px rgb(11 35 67 / 0.04), 0 8px 24px -12px rgb(11 35 67 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(11 35 67 / 0.04), 0 24px 48px -20px rgb(11 35 67 / 0.25);
+  --shadow-device: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 30px 60px -24px rgb(11 35 67 / 0.35),
+    0 12px 24px -12px rgb(11 35 67 / 0.18);
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 9s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -10px, 0);
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    @apply bg-white font-sans text-ink antialiased;
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-navy;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: rgb(0 102 230 / 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  [id] {
+    scroll-margin-top: 6.5rem;
+  }
+}
+
+@layer utilities {
+  .panel {
+    border-radius: 1.75rem;
+  }
+  @media (min-width: 768px) {
+    .panel {
+      border-radius: var(--radius-panel);
+    }
+  }
+
+  /* fine dotted grid used sparingly behind technical illustrations */
+  .bg-dotgrid {
+    background-image: radial-gradient(rgb(11 35 67 / 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Sections receive programmatic focus after in-page navigation; no ring needed. */
+[tabindex='-1']:focus {
+  outline: none;
+}
