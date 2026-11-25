@@ -5,15 +5,18 @@ import { site } from '../config/site'
  * are delivered.
  *
  * Providers (set with VITE_INQUIRY_PROVIDER, default 'api'):
- *  - 'api'    : POSTs to /api/inquiry (Cloudflare Pages Function in
- *               functions/api/inquiry.js), which emails the inquiry with a PDF
- *               summary attached to hexoralabs@gmail.com via Gmail SMTP.
+ *  - 'api'    : POSTs to the Hexora backend (backend/ — a Cloudflare Worker) at
+ *               `${VITE_API_URL}/api/inquiry`, which emails the inquiry with a
+ *               PDF summary attached to hexoralabs@gmail.com via Gmail SMTP.
+ *               In development VITE_API_URL can stay empty: Vite proxies /api
+ *               to the local Worker (see vite.config.js).
  *  - 'mailto' : opens the visitor's own email app with the details pre-filled.
  *  - 'supabase' (future): see src/lib/supabase.js.
  *
  * The form component only calls `submitInquiry` and reads its result.
  */
 export const INQUIRY_PROVIDER = import.meta.env.VITE_INQUIRY_PROVIDER || 'api'
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
 
 export const emptyInquiry = {
   name: '',
@@ -75,7 +78,7 @@ export function buildMailtoUrl(values) {
 }
 
 async function submitViaApi(values, { honeypot, elapsedMs }) {
-  const res = await fetch('/api/inquiry', {
+  const res = await fetch(`${API_URL}/api/inquiry`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({

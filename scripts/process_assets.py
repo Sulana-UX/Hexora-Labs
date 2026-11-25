@@ -4,7 +4,8 @@ Hexora Labs — brand asset pipeline.
 Reads the ORIGINAL logo files (left untouched in /brand-originals) and generates
 web-optimised derivatives:
 
-  src/assets/brand/logo-horizontal.webp   transparent horizontal lockup (nav, footer)
+  frontend/src/assets/brand/logo-horizontal.webp   transparent horizontal lockup (nav, footer)
+  backend/src/logo.png                    logo for the PDF header
   src/assets/brand/logo-mark.webp         transparent icon mark
   src/assets/brand/logo-badge.webp        circular badge, transparent outside the ring
   public/favicon.ico, favicon-16/32.png, apple-touch-icon.png, icon-192/512.png
@@ -26,8 +27,9 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "brand-originals"
 HORIZONTAL = SRC / "Hexora Labs Software Solutions Logo.png"
 BADGE = SRC / "Hexora Labs Software Solutions Logo (1).png"
-OUT_ASSETS = ROOT / "src" / "assets" / "brand"
-OUT_PUBLIC = ROOT / "public"
+OUT_ASSETS = ROOT / "frontend" / "src" / "assets" / "brand"
+OUT_PUBLIC = ROOT / "frontend" / "public"
+OUT_BACKEND_LOGO = ROOT / "backend" / "src" / "logo.png"  # PDF header logo
 DIVIDER_X = 690  # x-position (original px) between icon mark and wordmark
 
 OUT_ASSETS.mkdir(parents=True, exist_ok=True)
@@ -117,6 +119,7 @@ rgba = np.where(inside_a, np.concatenate([rgb / 255.0, np.ones_like(rgba[..., :1
 lockup = trim(to_image(rgba), pad=6)
 fit_width(lockup, 760).save(OUT_ASSETS / "logo-horizontal.webp", "WEBP", quality=92, method=6)
 fit_width(lockup, 760).save(OUT_ASSETS / "logo-horizontal.png", optimize=True)
+fit_width(lockup, 760).save(OUT_BACKEND_LOGO, optimize=True)
 
 # ---------------------------------------------------------------- icon mark
 mark = trim(to_image(rgba[:, :DIVIDER_X - 30]), pad=4)

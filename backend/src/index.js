@@ -1,23 +1,49 @@
 /**
- * POST /api/inquiry — Cloudflare Pages Function.
+ * Hexora Labs API — Cloudflare Worker.
  *
- * Validates a project inquiry, renders a branded PDF summary and emails it
- * (with the PDF attached) to the Hexora Labs inbox through Gmail SMTP.
+ * Routes
+ *   GET  /api/health    → { ok: true }
+ *   POST /api/inquiry   → validates a project inquiry, renders a branded PDF
+ *                         summary and emails it (PDF attached) via Gmail SMTP.
  *
- * Required environment variables (never commit these):
+ * Secrets (never commit — `wrangler secret put <NAME>` or .dev.vars locally):
  *   GMAIL_USER          the Gmail address that sends the email
  *   GMAIL_APP_PASSWORD  a Google "App password" for that account
  *   INQUIRY_TO          where inquiries are delivered (defaults to GMAIL_USER)
- * Local: .dev.vars · Production: Cloudflare Pages → Settings → Variables and Secrets
+ * Vars (wrangler.toml):
+ *   ALLOWED_ORIGINS     comma-separated website origins allowed to call the API
  */
 import { WorkerMailer } from 'worker-mailer'
-import { buildPdf, formatDeadline } from '../../server/inquiry-pdf.js'
+import { buildPdf, formatDeadline } from './pdf.js'
+import logoPng from './logo.png'
 
 const LIMITS = { name: 100, email: 160, projectType: 80, budget: 80, deadline: 20, description: 5000 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
-const json = (status, body) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
+const json = (status, body, headers = {}) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers },
+  })
+
+function allowedOrigins(env) {
+  return (env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+}
+
+/** CORS headers for an allowed origin (empty object when not allowed). */
+function corsHeaders(origin, env) {
+  if (!origin || !allowedOrigins(env).includes(origin)) return {}
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  }
+}
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -87,25 +113,21 @@ function emailText(d) {
 
 /* ------------------------------------------------------------------ handler */
 
-export async function onRequestPost({ request, env }) {
-  // Same-origin only
-  const origin = request.headers.get('Origin')
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json(403, { success: false, message: 'Forbidden' })
-
+async function handleInquiry(request, env, cors) {
   if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
-    return json(500, { success: false, message: 'Email delivery is not configured.' })
+    return json(500, { success: false, message: 'Email delivery is not configured.' }, cors)
   }
 
   let body
   try {
     body = await request.json()
   } catch {
-    return json(400, { success: false, message: 'Invalid request.' })
+    return json(400, { success: false, message: 'Invalid request.' }, cors)
   }
 
   // Bot traps: hidden checkbox and implausibly fast submissions → pretend success
   if (body.botcheck || (typeof body.elapsedMs === 'number' && body.elapsedMs < 2500)) {
-    return json(200, { success: true, reference: 'HX-OK' })
+    return json(200, { success: true, reference: 'HX-OK' }, cors)
   }
 
   const data = {
@@ -117,7 +139,7 @@ export async function onRequestPost({ request, env }) {
     description: clean(body.description, LIMITS.description),
   }
   if (!data.name || !EMAIL_RE.test(data.email) || !data.projectType || data.description.length < 20) {
-    return json(422, { success: false, message: 'Please complete all required fields.' })
+    return json(422, { success: false, message: 'Please complete all required fields.' }, cors)
   }
 
   const now = new Date()
@@ -132,15 +154,7 @@ export async function onRequestPost({ request, env }) {
   })} (Sri Lanka time)`
 
   try {
-    let logoBytes = null
-    try {
-      const res = await fetch(new URL('/brand/logo-horizontal.png', request.url))
-      if (res.ok) logoBytes = new Uint8Array(await res.arrayBuffer())
-    } catch {
-      /* logo is optional */
-    }
-
-    const pdfBytes = await buildPdf(data, logoBytes)
+    const pdfBytes = await buildPdf(data, new Uint8Array(logoPng))
     const safeName = data.name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'client'
 
     await WorkerMailer.send(
@@ -164,13 +178,27 @@ export async function onRequestPost({ request, env }) {
       },
     )
 
-    return json(200, { success: true, reference: data.reference })
+    return json(200, { success: true, reference: data.reference }, cors)
   } catch (err) {
     console.error('Inquiry delivery failed:', err?.message || err)
-    return json(502, { success: false, message: 'We could not send your inquiry right now.' })
+    return json(502, { success: false, message: 'We could not send your inquiry right now.' }, cors)
   }
 }
 
-export function onRequest() {
-  return json(405, { success: false, message: 'Method not allowed' })
+export default {
+  async fetch(request, env) {
+    const { pathname } = new URL(request.url)
+    const origin = request.headers.get('Origin')
+    const cors = corsHeaders(origin, env)
+
+    if (pathname === '/api/health') return json(200, { ok: true }, cors)
+    if (pathname !== '/api/inquiry') return json(404, { success: false, message: 'Not found' })
+
+    // Only the Hexora website (ALLOWED_ORIGINS) may call the inquiry endpoint
+    if (!origin || !cors['Access-Control-Allow-Origin']) return json(403, { success: false, message: 'Forbidden' })
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+    if (request.method !== 'POST') return json(405, { success: false, message: 'Method not allowed' }, cors)
+
+    return handleInquiry(request, env, cors)
+  },
 }
