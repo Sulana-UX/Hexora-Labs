@@ -6,10 +6,10 @@ web-optimised derivatives:
 
   frontend/src/assets/brand/logo-horizontal.webp   transparent horizontal lockup (nav, footer)
   backend/src/logo.png                    logo for the PDF header
-  src/assets/brand/logo-mark.webp         transparent icon mark
-  src/assets/brand/logo-badge.webp        circular badge, transparent outside the ring
-  public/favicon.ico, favicon-16/32.png, apple-touch-icon.png, icon-192/512.png
-  public/og-image.jpg                     1200x630 Open Graph preview
+  frontend/src/assets/brand/logo-mark.webp         transparent icon mark
+  frontend/src/assets/brand/logo-badge.webp        circular badge, transparent outside the ring
+  frontend/public/favicon.ico, favicon-16/32.png, apple-touch-icon.png, icon-192/512.png
+  frontend/public/og-image.jpg                     1200x630 social preview card (scripts/og_image.py)
 
 Background removal uses a "colour-to-alpha" against white so anti-aliased edges
 stay smooth, and keeps the intentional white face INSIDE the hexagon mark by
@@ -150,12 +150,10 @@ b = b.crop((int(cx - r - 2), int(cy - r - 2), int(cx + r + 3), int(cy + r + 3)))
 b.resize((640, 640), Image.LANCZOS).save(OUT_ASSETS / "logo-badge.webp", "WEBP", quality=90, method=6)
 
 # ---------------------------------------------------------------- Open Graph image
-og = Image.new("RGBA", (1200, 630), (234, 243, 252, 255))
-d = ImageDraw.Draw(og)
-d.rounded_rectangle([60, 60, 1140, 570], radius=48, fill=(255, 255, 255, 255))
-logo = fit_width(lockup, 840)
-og.alpha_composite(logo, ((1200 - logo.width) // 2, (630 - logo.height) // 2))
-og.convert("RGB").save(OUT_PUBLIC / "og-image.jpg", quality=88, optimize=True, progressive=True)
+# Social preview card (logo + tagline + services), see scripts/og_image.py
+import runpy  # noqa: E402
+
+runpy.run_path(str(Path(__file__).with_name("og_image.py")), run_name="__main__")
 
 print("Assets generated:")
 for p in sorted(list(OUT_ASSETS.iterdir()) + [q for q in OUT_PUBLIC.iterdir() if q.is_file()]):
