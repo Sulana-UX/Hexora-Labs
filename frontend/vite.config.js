@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // During development, forward /api calls to the backend Worker (npm run dev:api on :8787)
+  // During development, forward /api calls to the local backend (npm run dev:api on :8787)
   server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
   build: {
     outDir: 'dist',

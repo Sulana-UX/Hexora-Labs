@@ -8,6 +8,5 @@ dist
 .vscode/*
 !.vscode/extensions.json
 
-# Cloudflare local secrets & cache
-.dev.vars
-.wrangler
+# Vercel local config
+.vercel

@@ -1,21 +1,23 @@
 /**
- * Hexora Labs API — Cloudflare Worker.
+ * Hexora Labs API — core request handling (Web-standard Request → Response).
  *
- * Routes
+ * Used by the Vercel functions in api/ and by the local dev server (dev-server.js).
+ *
  *   GET  /api/health    → { ok: true }
  *   POST /api/inquiry   → validates a project inquiry, renders a branded PDF
  *                         summary and emails it (PDF attached) via Gmail SMTP.
  *
- * Secrets (never commit — `wrangler secret put <NAME>` or .dev.vars locally):
+ * Environment variables (Vercel → Settings → Environment Variables, or backend/.env locally):
  *   GMAIL_USER          the Gmail address that sends the email
- *   GMAIL_APP_PASSWORD  a Google "App password" for that account
+ *   GMAIL_APP_PASSWORD  a Google "App password" for that account (secret)
  *   INQUIRY_TO          where inquiries are delivered (defaults to GMAIL_USER)
- * Vars (wrangler.toml):
  *   ALLOWED_ORIGINS     comma-separated website origins allowed to call the API
  */
-import { WorkerMailer } from 'worker-mailer'
+import { readFileSync } from 'node:fs'
+import nodemailer from 'nodemailer'
 import { buildPdf, formatDeadline } from './pdf.js'
-import logoPng from './logo.png'
+
+const LOGO_PNG = readFileSync(new URL('./logo.png', import.meta.url))
 
 const LIMITS = { name: 100, email: 160, projectType: 80, budget: 80, deadline: 20, description: 5000 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -64,15 +66,6 @@ function makeReference(now) {
   const rand = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).toUpperCase().padStart(6, '0').slice(-4)
   return `HX-${ymd}-${rand}`
 }
-
-function toBase64(bytes) {
-  let binary = ''
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  return btoa(binary)
-}
-
-/* ---------------------------------------------------------------------- PDF */
 
 /* -------------------------------------------------------------------- email */
 
@@ -154,29 +147,31 @@ async function handleInquiry(request, env, cors) {
   })} (Sri Lanka time)`
 
   try {
-    const pdfBytes = await buildPdf(data, new Uint8Array(logoPng))
+    const pdfBytes = await buildPdf(data, new Uint8Array(LOGO_PNG))
     const safeName = data.name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'client'
 
-    await WorkerMailer.send(
-      {
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        credentials: { username: env.GMAIL_USER, password: env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') },
-        authType: 'plain',
-      },
-      {
-        from: { name: 'Hexora Labs Website', email: env.GMAIL_USER },
-        to: env.INQUIRY_TO || env.GMAIL_USER,
-        reply: { name: data.name, email: data.email },
-        subject: `New Project Inquiry: ${data.projectType} — ${data.name} [${data.reference}]`,
-        text: emailText(data),
-        html: emailHtml(data),
-        attachments: [
-          { filename: `Hexora-Inquiry-${data.reference}-${safeName}.pdf`, content: toBase64(pdfBytes), type: 'application/pdf' },
-        ],
-      },
-    )
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: { user: env.GMAIL_USER, pass: env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') },
+    })
+
+    await transporter.sendMail({
+      from: { name: 'Hexora Labs Website', address: env.GMAIL_USER },
+      to: env.INQUIRY_TO || env.GMAIL_USER,
+      replyTo: { name: data.name, address: data.email },
+      subject: `New Project Inquiry: ${data.projectType} — ${data.name} [${data.reference}]`,
+      text: emailText(data),
+      html: emailHtml(data),
+      attachments: [
+        {
+          filename: `Hexora-Inquiry-${data.reference}-${safeName}.pdf`,
+          content: Buffer.from(pdfBytes),
+          contentType: 'application/pdf',
+        },
+      ],
+    })
 
     return json(200, { success: true, reference: data.reference }, cors)
   } catch (err) {
@@ -185,20 +180,19 @@ async function handleInquiry(request, env, cors) {
   }
 }
 
-export default {
-  async fetch(request, env) {
-    const { pathname } = new URL(request.url)
-    const origin = request.headers.get('Origin')
-    const cors = corsHeaders(origin, env)
+/** Route a Web-standard Request to the right handler. */
+export async function handle(request, env = process.env) {
+  const { pathname } = new URL(request.url)
+  const origin = request.headers.get('Origin')
+  const cors = corsHeaders(origin, env)
 
-    if (pathname === '/api/health') return json(200, { ok: true }, cors)
-    if (pathname !== '/api/inquiry') return json(404, { success: false, message: 'Not found' })
+  if (pathname === '/api/health') return json(200, { ok: true }, cors)
+  if (pathname !== '/api/inquiry') return json(404, { success: false, message: 'Not found' })
 
-    // Only the Hexora website (ALLOWED_ORIGINS) may call the inquiry endpoint
-    if (!origin || !cors['Access-Control-Allow-Origin']) return json(403, { success: false, message: 'Forbidden' })
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
-    if (request.method !== 'POST') return json(405, { success: false, message: 'Method not allowed' }, cors)
+  // Only the Hexora website (ALLOWED_ORIGINS) may call the inquiry endpoint
+  if (!origin || !cors['Access-Control-Allow-Origin']) return json(403, { success: false, message: 'Forbidden' })
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+  if (request.method !== 'POST') return json(405, { success: false, message: 'Method not allowed' }, cors)
 
-    return handleInquiry(request, env, cors)
-  },
+  return handleInquiry(request, env, cors)
 }

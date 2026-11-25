@@ -1,6 +1,6 @@
 /**
  * Branded PDF summary for project inquiries (used by functions/api/inquiry.js).
- * Pure JavaScript (pdf-lib) — runs on Cloudflare Workers and in Node for testing.
+ * Pure JavaScript (pdf-lib) — runs in Node.js (Vercel functions and local dev).
  */
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 

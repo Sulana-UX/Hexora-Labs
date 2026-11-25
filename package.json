@@ -13,7 +13,6 @@
     "build": "npm run build -w frontend",
     "preview": "npm run preview -w frontend",
     "lint": "npm run lint -w frontend",
-    "deploy:api": "npm run deploy -w backend",
     "assets": "python scripts/process_assets.py"
   },
   "devDependencies": {

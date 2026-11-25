@@ -1,5 +1,0 @@
-# Copy to backend/.dev.vars for local development (git-ignored).
-# In production set each one with:  npx wrangler secret put <NAME>   (run inside backend/)
-GMAIL_USER=hexoralabs@gmail.com
-GMAIL_APP_PASSWORD=your-16-character-app-password
-INQUIRY_TO=hexoralabs@gmail.com

@@ -6,7 +6,7 @@
  *
  * 1. npm install @supabase/supabase-js
  * 2. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local and to the
- *    Cloudflare Pages environment variables.
+ *    website's Vercel environment variables.
  * 3. Create an `inquiries` table with Row Level Security that allows INSERT only:
  *
  *      create table public.inquiries (

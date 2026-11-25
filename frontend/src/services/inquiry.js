@@ -5,11 +5,11 @@ import { site } from '../config/site'
  * are delivered.
  *
  * Providers (set with VITE_INQUIRY_PROVIDER, default 'api'):
- *  - 'api'    : POSTs to the Hexora backend (backend/ — a Cloudflare Worker) at
+ *  - 'api'    : POSTs to the Hexora backend (backend/ — Vercel serverless functions) at
  *               `${VITE_API_URL}/api/inquiry`, which emails the inquiry with a
  *               PDF summary attached to hexoralabs@gmail.com via Gmail SMTP.
  *               In development VITE_API_URL can stay empty: Vite proxies /api
- *               to the local Worker (see vite.config.js).
+ *               to the local backend (see vite.config.js).
  *  - 'mailto' : opens the visitor's own email app with the details pre-filled.
  *  - 'supabase' (future): see src/lib/supabase.js.
  *
