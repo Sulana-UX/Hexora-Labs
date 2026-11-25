@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
-import { ArrowUp, ExternalLink, Mail } from 'lucide-react'
+import { ArrowUp, ExternalLink, Mail, Phone } from 'lucide-react'
 import { navigation, site } from '../../config/site'
 import { services } from '../../data/content'
 import { useGoToSection } from '../../hooks/useGoToSection'
 import { useInquiry } from '../../context/InquiryContext'
 import { Container } from '../ui/Container'
 import { Logo } from '../ui/Logo'
+import { WhatsAppIcon } from '../ui/WhatsAppIcon'
 
 const linkCls = 'text-[0.95rem] text-navy/80 transition-colors hover:text-primary'
 const headCls = 'font-sans text-xs font-semibold uppercase tracking-[0.16em] text-navy/55'
@@ -94,7 +95,27 @@ export function Footer() {
               <Mail aria-hidden="true" className="size-4 shrink-0 text-primary" />
               {site.email}
             </a>
-            {site.phone && <p className="mt-3 text-navy/80">{site.phone}</p>}
+            {site.phone && (
+              <a
+                href={site.phone.href}
+                className="mt-3 flex items-center gap-2 font-display text-lg font-semibold text-navy transition-colors hover:text-primary"
+              >
+                <Phone aria-hidden="true" className="size-4 shrink-0 text-primary" />
+                {site.phone.display}
+              </a>
+            )}
+            {site.whatsapp && (
+              <a
+                href={site.whatsapp.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center gap-2 text-[0.95rem] font-semibold text-[#0b6b34] transition-colors hover:text-[#25a244]"
+              >
+                <WhatsAppIcon className="size-4 shrink-0" />
+                Chat on WhatsApp
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            )}
 
             <div className="mt-8 rounded-2xl bg-ice/70 p-5">
               <h3 className="font-sans text-sm font-semibold text-navy">Your privacy</h3>

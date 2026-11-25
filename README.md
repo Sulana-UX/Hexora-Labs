@@ -90,7 +90,7 @@ src/
 
 ### Editing content
 
-- **Email, phone, WhatsApp, social links:** `src/config/site.js`. `phone`/`whatsapp` render only when set, and social links render only when they have a real `url`.
+- **Email, phone, WhatsApp, social links:** `src/config/site.js`. `phone` is `{ display, href }` (e.g. `tel:+94…`); `phone`/`whatsapp` render only when set, and social links render only when they have a real `url`.
 - **Services, Student Hub, process, reasons, budget tiers, project types:** `src/data/content.js`.
 - **Portfolio:** `src/data/portfolio.js`. All current entries are clearly marked **concept projects** (`concept: true`), which shows a "Concept project" badge. When real projects are completed, add them with `concept: false` and either a code-drawn preview or an image (see "Asset management").
 

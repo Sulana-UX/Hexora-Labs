@@ -17,8 +17,11 @@ export const site = {
    * Optional contact channels. Leave as null until real details exist —
    * nothing is rendered for null values.
    */
-  phone: null, // e.g. '+00 00 000 0000'
-  whatsapp: null, // e.g. 'https://wa.me/<number>'
+  phone: { display: '072 357 7663', href: 'tel:+94723577663' },
+  whatsapp: {
+    display: '072 357 7663',
+    href: `https://wa.me/94723577663?text=${encodeURIComponent("Hi Hexora Labs, I'd like to discuss a project.")}`,
+  },
 
   /**
    * Social profiles. Only entries with a non-empty `url` are displayed.

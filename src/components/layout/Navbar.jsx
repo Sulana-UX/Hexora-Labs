@@ -6,6 +6,7 @@ import { useActiveSection } from '../../hooks/useActiveSection'
 import { useGoToSection } from '../../hooks/useGoToSection'
 import { useLocation } from 'react-router-dom'
 import { Logo } from '../ui/Logo'
+import { WhatsAppIcon } from '../ui/WhatsAppIcon'
 
 const sectionIds = navigation.map((n) => n.section)
 
@@ -187,9 +188,27 @@ export function Navbar() {
               <div className="mt-2 rounded-2xl bg-navy p-4 text-white">
                 <p className="text-sm text-white/70">Have a project in mind?</p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <a href={`mailto:${site.email}`} className="text-sm font-semibold underline-offset-4 hover:underline">
-                    {site.email}
-                  </a>
+                  <div className="flex flex-col gap-1">
+                    <a href={`mailto:${site.email}`} className="text-sm font-semibold underline-offset-4 hover:underline">
+                      {site.email}
+                    </a>
+                    {site.phone && (
+                      <a href={site.phone.href} className="text-sm font-semibold underline-offset-4 hover:underline">
+                        {site.phone.display}
+                      </a>
+                    )}
+                    {site.whatsapp && (
+                      <a
+                        href={site.whatsapp.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5ee08f] underline-offset-4 hover:underline"
+                      >
+                        <WhatsAppIcon className="size-3.5" /> WhatsApp
+                        <span className="sr-only">(opens in a new tab)</span>
+                      </a>
+                    )}
+                  </div>
                   <a
                     href="/contact"
                     onClick={(e) => handleNav(e, 'contact')}

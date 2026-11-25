@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Check, ChevronDown, Copy, Mail, MailOpen, Send } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, Copy, Mail, MailOpen, Phone, Send } from 'lucide-react'
 import { site } from '../../config/site'
 import { budgetRanges, projectTypes } from '../../data/content'
 import {
@@ -15,6 +15,7 @@ import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import { Container, Panel } from '../ui/Container'
 import { Eyebrow } from '../ui/SectionHeading'
 import { Reveal } from '../ui/Reveal'
+import { WhatsAppIcon } from '../ui/WhatsAppIcon'
 
 const inputBase =
   'peer w-full rounded-2xl border bg-white px-4 text-[0.95rem] text-ink placeholder:text-muted/60 transition-[border-color,box-shadow] duration-200 focus:outline-none focus:ring-4'
@@ -78,8 +79,17 @@ function DirectEmail() {
   const { copied, copy } = useCopyToClipboard()
   return (
     <div className="rounded-3xl bg-white p-6 shadow-soft">
-      <p className="text-sm font-semibold text-navy">Prefer to email directly?</p>
+      <p className="text-sm font-semibold text-navy">Prefer to reach us directly?</p>
       <p className="mt-1 break-all font-display text-lg font-semibold text-primary sm:text-xl">{site.email}</p>
+      {site.phone && (
+        <a
+          href={site.phone.href}
+          className="mt-1 inline-flex items-center gap-2 font-display text-lg font-semibold text-navy transition-colors hover:text-primary sm:text-xl"
+        >
+          <Phone aria-hidden="true" className="size-4 text-primary" />
+          {site.phone.display}
+        </a>
+      )}
       <div className="mt-5 flex flex-wrap gap-2.5">
         <a
           href={`mailto:${site.email}`}
@@ -99,6 +109,25 @@ function DirectEmail() {
           )}
           {copied === 'ok' ? 'Copied' : 'Copy email'}
         </button>
+        {site.phone && (
+          <a
+            href={site.phone.href}
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-semibold text-navy transition-colors hover:border-navy/25 hover:bg-ice/50"
+          >
+            <Phone aria-hidden="true" className="size-4" /> Call us
+          </a>
+        )}
+        {site.whatsapp && (
+          <a
+            href={site.whatsapp.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-5 text-sm font-semibold text-[#0b6b34] transition-colors hover:border-[#25D366] hover:bg-[#25D366]/20"
+          >
+            <WhatsAppIcon className="size-4" /> WhatsApp
+            <span className="sr-only">(opens WhatsApp in a new tab)</span>
+          </a>
+        )}
       </div>
       <p className="sr-only" role="status" aria-live="polite">
         {copied === 'ok' ? 'Email address copied to clipboard' : copied === 'error' ? 'Copy failed — please copy the address manually' : ''}
